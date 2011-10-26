@@ -26,7 +26,7 @@ TranslateForPrinter = True
 RefLabelsAcross = 3
 RefLabelsUp = 6
 RefPointX = LeftMargin + RefLabelsAcross * HorizPitch
-RefPointY = TopMargin + RefLabelsUp * VertSize
+RefPointY = TopMargin + (RefLabelsUp * VertSize / 2)
 # print "RefPointX=", RefPointX, "RefPointY=", RefPointY
 # sys.exit(0)
 
@@ -38,15 +38,11 @@ ScaleX = 1
 ScaleY = 1
 
 if TranslateForPrinter:
-	# Reduce first number to move left
-	# Reduce second number to make lower on page.
-	translate = "%s mm %s mm" % (TranslateX, TranslateY)
-	# Shrink (100,100) to (x, y)
-	scale = "%s %s" % (ScaleX, ScaleY) 
-	comment = "% "
+	transform = "%s mm %s mm translate %s %s scale %s neg %s add mm %s neg %s add mm translate" % (LeftMargin, TopMargin, ScaleX, ScaleY, LeftMargin, TranslateX, TopMargin, TranslateY)
+	# comment = "% "
+	comment = ""
 else:
-	translate = ("0 0")
-	scale = ("1 1")
+	transform = ("% no translation")
 	comment = ""
 
 # print LeftMargin + HorizCount * HorizPitch - HorizGap + RightMargin, HorizPageWidth
@@ -66,11 +62,24 @@ print """%%!PS-Adobe-2.0
 
 /mm { 360 mul 127 div } def
 
-%s translate %s scale """ % (translate, scale)
+%s mm %s mm moveto -4 mm -4 mm rlineto stroke\n""" % (LeftMargin, TopMargin)
+
+localtime = time.asctime( time.localtime(time.time()) )
+print """/Times-Roman findfont
+10 scalefont
+setfont
+newpath
+100 mm %s 1.5 mul moveto
+(Date: %s t(%s, %s) s(%s, %s)) show
+closepath
+stroke
+
+""" % (TopMargin, localtime, TranslateX, TranslateY, ScaleX, ScaleY)
+
+print "\n%s\n" % transform
 
 print """
 %%%%Page: 1 1
-
 
 %% INSERT-POINT
 
@@ -78,19 +87,7 @@ print """
 
 %s0 0 moveto %s mm %s mm rlineto stroke""" % (comment, comment, HorizPageWidth, VertPageLength)
 
-localtime = time.asctime( time.localtime(time.time()) )
-print """/Times-Roman findfont
-10 scalefont
-setfont
-newpath
-100 mm %s 1.5 mul moveto %% as the name says, move the cursor to x y
-(Date: %s t(%s, %s) s(%s, %s)) show %% ta daa A Square
-closepath
-stroke
-
-0.85 setgray
-
-""" % (TopMargin, localtime, TranslateX, TranslateY, ScaleX, ScaleY)
+print "\n0.85 setgray\n"
 
 # Draw vertical lines
 yd = VertPageLength - BottomMargin - TopMargin
@@ -128,6 +125,15 @@ for c in range(0, VertCount):
 		else:
 			xd1 = xd
 		print "%s mm %s mm moveto %s mm 0 rlineto stroke" % (x1, y1, xd1)
+
+# Draw something showing the reference point
+RefLabelsAcross = 3
+RefLabelsUp = 6
+RefPointX = LeftMargin + RefLabelsAcross * HorizPitch
+RefPointY = TopMargin + RefLabelsUp * VertSize
+
+print "newpath %s mm %s mm moveto %s mm %s mm rlineto stroke" % (RefPointX, RefPointY, -HorizGap, HorizGap)
+print "newpath %s mm %s mm moveto %s mm %s mm rlineto stroke" % (RefPointX, RefPointY, -HorizGap, -HorizGap)
 
 print """
 showpage
