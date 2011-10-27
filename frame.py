@@ -20,22 +20,52 @@ BottomMargin = 11.8
 VertSize = 21.13
 VertPitch = VertSize
 
+RefLabelsAcross = 3
+RefLabelsUp = 6
+RefPointX = RefLabelsAcross * HorizPitch
+RefPointY = (RefLabelsUp * VertSize)
+
+print "%# RefPointX=", RefPointX, "RefPointY=", RefPointY
+### CALIBRATION
+
+# Last time (copy in from line at bottom of paper):
+LastXTrans = 0 # Positive moves labels to right
+LastYTrans = 0 # Positive moves labels up
+LastXScale = 1.0070
+LastYScale = 0.9997
+print "%# LastXScale=", LastXScale, "LastYScale=", LastYScale
+
+# This time (measure these)
+# X distance between left side of page and left side of grid
+MeasuredXLS = 6.63
+## MeasuredXLS = 4.3
+# Y distance between bottom of page and bottom of grid
+MeasuredYLS = 10.70
+##MeasuredYLS = TopMargin
+# X distance between left side of grid and reference mark
+##MeasuredXLStoRP = RefLabelsAcross * HorizPitch
+MeasuredXLStoRP = 121.30
+# Y distance between bottom of grid and reference mark
+# MeasuredYLStoRP = RefLabelsUp * VertSize
+MeasuredYLStoRP = 126.53
+print "%# MeasuredXLStoRP=", MeasuredXLStoRP, "MeasuredYLStoRP=", MeasuredYLStoRP
+
 # Transform
 TranslateForPrinter = True
 
-RefLabelsAcross = 3
-RefLabelsUp = 6
-RefPointX = LeftMargin + RefLabelsAcross * HorizPitch
-RefPointY = TopMargin + (RefLabelsUp * VertSize / 2)
-# print "RefPointX=", RefPointX, "RefPointY=", RefPointY
-# sys.exit(0)
+ThisXTrans = LeftMargin - MeasuredXLS
+ThisYTrans = TopMargin - MeasuredYLS
 
-# TranslateX = 3.97
-# TranslateY = 10.8
-TranslateX = 0 # Positive moves labels to right
-TranslateY = 0   # Positive moves labels up
-ScaleX = 1
-ScaleY = 1
+TranslateX = LastXTrans + ThisXTrans # Positive moves labels to right
+TranslateY = LastYTrans + ThisYTrans   # Positive moves labels up
+
+ThisXScale = RefPointX / MeasuredXLStoRP
+ThisYScale = RefPointY / MeasuredYLStoRP
+print "%# ThisXScale=", ThisXScale, "ThisYScale=", ThisYScale
+
+ScaleX = LastXScale * ThisXScale
+ScaleY = LastYScale * ThisYScale
+print "%# ScaleX=", ScaleX, "ScaleY=", ScaleY
 
 if TranslateForPrinter:
 	transform = "%s mm %s mm translate %s %s scale %s neg %s add mm %s neg %s add mm translate" % (LeftMargin, TopMargin, ScaleX, ScaleY, LeftMargin, TranslateX, TopMargin, TranslateY)
@@ -62,6 +92,10 @@ print """%%!PS-Adobe-2.0
 
 /mm { 360 mul 127 div } def
 
+%%%%Page: 1 1
+
+0.5 setlinewidth [1 3] 0 setdash
+
 %s mm %s mm moveto -4 mm -4 mm rlineto stroke\n""" % (LeftMargin, TopMargin)
 
 localtime = time.asctime( time.localtime(time.time()) )
@@ -69,8 +103,8 @@ print """/Times-Roman findfont
 10 scalefont
 setfont
 newpath
-100 mm %s 1.5 mul moveto
-(Date: %s t(%s, %s) s(%s, %s)) show
+100 mm %s 2 mul moveto
+(Date: %s t(%2.3f, %2.3f) s(%2.4f, %2.4f)) show
 closepath
 stroke
 
@@ -79,15 +113,13 @@ stroke
 print "\n%s\n" % transform
 
 print """
-%%%%Page: 1 1
-
 %% INSERT-POINT
 
 %s50 mm 50 mm moveto 50 mm 100 mm lineto 100 mm 100 mm lineto 100 mm 50 mm lineto 50 mm 50 mm lineto stroke
 
 %s0 0 moveto %s mm %s mm rlineto stroke""" % (comment, comment, HorizPageWidth, VertPageLength)
 
-print "\n0.85 setgray\n"
+print "\n0.3 setgray\n"
 
 # Draw vertical lines
 yd = VertPageLength - BottomMargin - TopMargin
@@ -126,14 +158,9 @@ for c in range(0, VertCount):
 			xd1 = xd
 		print "%s mm %s mm moveto %s mm 0 rlineto stroke" % (x1, y1, xd1)
 
-# Draw something showing the reference point
-RefLabelsAcross = 3
-RefLabelsUp = 6
-RefPointX = LeftMargin + RefLabelsAcross * HorizPitch
-RefPointY = TopMargin + RefLabelsUp * VertSize
-
-print "newpath %s mm %s mm moveto %s mm %s mm rlineto stroke" % (RefPointX, RefPointY, -HorizGap, HorizGap)
-print "newpath %s mm %s mm moveto %s mm %s mm rlineto stroke" % (RefPointX, RefPointY, -HorizGap, -HorizGap)
+# Draw the reference point
+print "newpath %s mm %s mm moveto %s mm %s mm rlineto stroke" % (LeftMargin + RefPointX, TopMargin + RefPointY, -HorizGap, HorizGap)
+print "newpath %s mm %s mm moveto %s mm %s mm rlineto stroke" % (LeftMargin + RefPointX, TopMargin + RefPointY, -HorizGap, -HorizGap)
 
 print """
 showpage

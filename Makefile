@@ -29,7 +29,7 @@ frame.ps: frame.py
 	./$< > $@
 
 barcode.ps: frame.ps barcode-tmp.ps
-	gawk '$$0~/^% INSERT-POINT$$/{while((getline<"barcode-tmp.ps")){if($$1=="showpage")break;if($$0~/^% Printing/)P=1;if(P==1)print}close("barcode-tmp.ps");next}{print}' < $< > $@
+	grep -v '^%#' < $< | gawk '$$0~/^% INSERT-POINT$$/{while((getline<"barcode-tmp.ps")){if($$1=="showpage")break;if($$0~/^% Printing/)P=1;if(P==1)print}close("barcode-tmp.ps");next}{print}' > $@
 
 .PHONY: clean
 clean:
