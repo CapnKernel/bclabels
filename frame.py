@@ -25,52 +25,68 @@ RefLabelsUp = 6
 RefPointX = RefLabelsAcross * HorizPitch
 RefPointY = (RefLabelsUp * VertSize)
 
-print "%# RefPointX=", RefPointX, "RefPointY=", RefPointY
 ### CALIBRATION
-
-# Last time (copy in from line at bottom of paper):
-LastXTrans = 0 # Positive moves labels to right
-LastYTrans = 0 # Positive moves labels up
-LastXScale = 1.0070
-LastYScale = 0.9997
-print "%# LastXScale=", LastXScale, "LastYScale=", LastYScale
-
-# This time (measure these)
-# X distance between left side of page and left side of grid
-MeasuredXLS = 6.63
-## MeasuredXLS = 4.3
-# Y distance between bottom of page and bottom of grid
-MeasuredYLS = 10.70
-##MeasuredYLS = TopMargin
-# X distance between left side of grid and reference mark
-##MeasuredXLStoRP = RefLabelsAcross * HorizPitch
-MeasuredXLStoRP = 121.30
-# Y distance between bottom of grid and reference mark
-# MeasuredYLStoRP = RefLabelsUp * VertSize
-MeasuredYLStoRP = 126.53
-print "%# MeasuredXLStoRP=", MeasuredXLStoRP, "MeasuredYLStoRP=", MeasuredYLStoRP
 
 # Transform
 TranslateForPrinter = True
 
+# Last time (copy in from line at bottom of paper):
+LastXTrans = -2.130 # Positive moves labels to right
+LastYTrans = 0.020 # Positive moves labels up
+
+LastXScale = 1.00199
+LastYScale = 1.00051
+
+# This time (measure these)
+# X distance between left side of page and left side of grid
+MeasuredXLS = 4.0565
+## MeasuredXLS = LeftMargin
+# Y distance between bottom of page and bottom of grid
+MeasuredYLS = 9.4
+##MeasuredYLS = TopMargin
+# X distance between left side of grid and reference mark
+##MeasuredXLStoRP = RefLabelsAcross * HorizPitch
+MeasuredXLStoRP = 121.99
+# Y distance between bottom of grid and reference mark
+# MeasuredYLStoRP = RefLabelsUp * VertSize
+MeasuredYBGtoRP = 126.84
+
+# Calculate translate
+print "%# LastXTrans=", LastXTrans, "LastYTrans=", LastYTrans
+print "%# LeftMargin=", LeftMargin, "TopMargin=", TopMargin
+print "%# MeasuredXLS=", MeasuredXLS, "MeasuredYLS=", MeasuredYLS
 ThisXTrans = LeftMargin - MeasuredXLS
 ThisYTrans = TopMargin - MeasuredYLS
+print "%# ThisXTrans=", ThisXTrans, "ThisYTrans=", ThisYTrans
 
 TranslateX = LastXTrans + ThisXTrans # Positive moves labels to right
 TranslateY = LastYTrans + ThisYTrans   # Positive moves labels up
+print "%# TranslateX=", TranslateX, "TranslateY=", TranslateY
+print "%#"
 
-ThisXScale = RefPointX / MeasuredXLStoRP
-ThisYScale = RefPointY / MeasuredYLStoRP
-print "%# ThisXScale=", ThisXScale, "ThisYScale=", ThisYScale
+# Calculate transform
+DescaledX = MeasuredXLStoRP / LastXScale
+DescaledY = MeasuredYBGtoRP / LastYScale
 
-ScaleX = LastXScale * ThisXScale
-ScaleY = LastYScale * ThisYScale
+ScaleX = RefPointX / DescaledX
+ScaleY = RefPointY / DescaledY
+
+# ThisXScale = RefPointX / MeasuredXLStoRP
+# ThisYScale = RefPointY / MeasuredYLStoRP
+
+# ScaleX = LastXScale / ThisXScale
+# ScaleY = LastYScale / ThisYScale
+print "%# LastXScale=", LastXScale, "LastYScale=", LastYScale
+print "%# RefPointX=", RefPointX, "RefPointY=", RefPointY
+print "%# MeasuredXLStoRP=", MeasuredXLStoRP, "MeasuredYBGtoRP=", MeasuredYBGtoRP
+print "%# DescaledX=", DescaledX, "DescaledY=", DescaledY
+# print "%# ThisXScale=", ThisXScale, "ThisYScale=", ThisYScale
 print "%# ScaleX=", ScaleX, "ScaleY=", ScaleY
 
 if TranslateForPrinter:
 	transform = "%s mm %s mm translate %s %s scale %s neg %s add mm %s neg %s add mm translate" % (LeftMargin, TopMargin, ScaleX, ScaleY, LeftMargin, TranslateX, TopMargin, TranslateY)
-	# comment = "% "
-	comment = ""
+	comment = "% "
+	# comment = ""
 else:
 	transform = ("% no translation")
 	comment = ""
@@ -104,7 +120,7 @@ print """/Times-Roman findfont
 setfont
 newpath
 100 mm %s 2 mul moveto
-(Date: %s t(%2.3f, %2.3f) s(%2.4f, %2.4f)) show
+(Date: %s t(%2.3f, %2.3f) s(%2.5f, %2.5f)) show
 closepath
 stroke
 
@@ -113,7 +129,12 @@ stroke
 print "\n%s\n" % transform
 
 print """
+
+[40000] 0 setdash
+
 %% INSERT-POINT
+
+[1 3] 0 setdash
 
 %s50 mm 50 mm moveto 50 mm 100 mm lineto 100 mm 100 mm lineto 100 mm 50 mm lineto 50 mm 50 mm lineto stroke
 

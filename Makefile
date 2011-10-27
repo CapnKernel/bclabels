@@ -9,21 +9,23 @@ TMARG:=		12
 BMARG:=		11
 # Internal white area surrounding each barcode
 MARGIN:=	5,1
-# PAGE:=		297x210 # Defaults to A4, so not necessary
+
+PAGE:=		9
 START:=		1000
 
 TABLE:=		$(COLS)x$(ROWS)+$(LMARG)+$(BMARG)-$(RMARG)-$(TMARG)
 COUNT:=		$(shell expr $(COLS) '*' $(ROWS))
-END:=		$(shell expr $(START) + $(COUNT) - 1)
-PREFIX:=	%AFD
+FIRST:=		$(shell expr $(START) + '(' $(PAGE) - 1 ')' '*' $(COUNT))
+LAST:=		$(shell expr $(FIRST) + $(COUNT) - 1)
+PREFIX:=	%AFS
 
 all: barcode.ps
 
-barcode.txt:
-	seq -w $(START) $(END) | sed -e 's/^/$(PREFIX)/g' > $@
+barcode.txt: Makefile
+	seq -w $(FIRST) $(LAST) | sed -e 's/^/$(PREFIX)/g' > $@
 
 barcode-tmp.ps: barcode.txt
-	$(BARCODE) $(strip $(if $(ENCODING),-e $(ENCODING)) $(if $(UNITS),-u $(UNITS)) $(if $(GEOM),-g $(GEOM)) $(if $(MARGIN),-m $(MARGIN)) $(if $(PAGE),-p $(PAGE)) -t $(TABLE)) -i $< -o $@
+	$(BARCODE) $(strip $(if $(ENCODING),-e $(ENCODING)) $(if $(UNITS),-u $(UNITS)) $(if $(GEOM),-g $(GEOM)) $(if $(MARGIN),-m $(MARGIN)) -t $(TABLE)) -i $< -o $@
 
 frame.ps: frame.py
 	./$< > $@
